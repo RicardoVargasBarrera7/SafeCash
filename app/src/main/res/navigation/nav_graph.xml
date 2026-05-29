@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashFragment">
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.project.safecash.ui.auth.SplashFragment"
+        android:label="Splash"
+        tools:layout="@layout/fragment_splash">
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_splashFragment_to_userDashboardFragment"
+            app:destination="@id/userDashboardFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_splashFragment_to_escoltaDashboardFragment"
+            app:destination="@id/escoltaDashboardFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_splashFragment_to_adminDashboardFragment"
+            app:destination="@id/adminDashboardFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.project.safecash.ui.auth.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_userDashboardFragment"
+            app:destination="@id/userDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_loginFragment_to_escoltaDashboardFragment"
+            app:destination="@id/escoltaDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_loginFragment_to_adminDashboardFragment"
+            app:destination="@id/adminDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.project.safecash.ui.auth.RegisterFragment"
+        android:label="Registro"
+        tools:layout="@layout/fragment_register">
+        <action
+            android:id="@+id/action_registerFragment_to_userDashboardFragment"
+            app:destination="@id/userDashboardFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/userDashboardFragment"
+        android:name="com.project.safecash.ui.user.UserDashboardFragment"
+        android:label="Dashboard Usuario"
+        tools:layout="@layout/fragment_user_dashboard">
+        <action
+            android:id="@+id/action_userDashboardFragment_to_crearSolicitudFragment"
+            app:destination="@id/crearSolicitudFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/escoltaDashboardFragment"
+        android:name="com.project.safecash.ui.escolta.EscoltaDashboardFragment"
+        android:label="Dashboard Escolta"
+        tools:layout="@layout/fragment_escolta_dashboard">
+        <action
+            android:id="@+id/action_escoltaDashboardFragment_to_cierreTurnoFragment"
+            app:destination="@id/cierreTurnoFragment" />
+        <action
+            android:id="@+id/action_escoltaDashboardFragment_to_detalleServicioFragment"
+            app:destination="@id/detalleServicioFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/adminDashboardFragment"
+        android:name="com.project.safecash.ui.admin.AdminDashboardFragment"
+        android:label="Dashboard Administrador"
+        tools:layout="@layout/fragment_admin_dashboard" />
+
+    <fragment
+        android:id="@+id/crearSolicitudFragment"
+        android:name="com.project.safecash.ui.user.CrearSolicitudFragment"
+        android:label="Crear Solicitud"
+        tools:layout="@layout/fragment_crear_solicitud" />
+
+    <fragment
+        android:id="@+id/cierreTurnoFragment"
+        android:name="com.project.safecash.ui.escolta.CierreTurnoFragment"
+        android:label="Cierre de Turno"
+        tools:layout="@layout/fragment_cierre_turno" />
+
+    <fragment
+        android:id="@+id/detalleServicioFragment"
+        android:name="com.project.safecash.ui.escolta.DetalleServicioFragment"
+        android:label="Detalle de Servicio"
+        tools:layout="@layout/fragment_detalle_servicio">
+        <argument
+            android:name="solicitudId"
+            app:argType="string" />
+    </fragment>
+
+</navigation>

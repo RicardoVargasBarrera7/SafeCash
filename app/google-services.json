@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "75733280189",
+    "project_id": "safecash-842d3",
+    "storage_bucket": "safecash-842d3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:75733280189:android:05ade43f41e13dadab9ed4",
+        "android_client_info": {
+          "package_name": "com.project.safecash"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxysSFNLORbiK07AZA2Umq8tv9mXJ29S4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
