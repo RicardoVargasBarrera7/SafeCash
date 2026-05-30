@@ -14,7 +14,7 @@
             android:id="@+id/tvAdminTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Panel de Control Admin"
+            android:text="@string/admin_dashboard_title"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
@@ -38,7 +38,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Centro de Acopio"
+                    android:text="@string/centro_acopio_label"
                     android:textAppearance="@style/TextAppearance.Material3.LabelLarge" />
 
                 <TextView
@@ -46,7 +46,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="$ 0.00"
+                    android:text="@string/balance_format"
                     android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
                     android:textColor="?attr/colorPrimary"
                     android:textStyle="bold" />
@@ -62,7 +62,7 @@
             app:layout_constraintTop_toBottomOf="@id/cardAcopio">
 
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/btnManageEscoltas"
+                android:id="@+id/btnManageAgentes"
                 android:layout_width="0dp"
                 android:layout_height="100dp"
                 android:layout_rowWeight="1"
@@ -82,7 +82,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Escoltas" />
+                        android:text="@string/agentes_operativos_label" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -107,7 +107,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Usuarios" />
+                        android:text="@string/usuarios_label" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -132,7 +132,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Movimientos" />
+                        android:text="@string/movimientos_label" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -157,7 +157,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Reportes" />
+                        android:text="@string/reportes_label" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </GridLayout>

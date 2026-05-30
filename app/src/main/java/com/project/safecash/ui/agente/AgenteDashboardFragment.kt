@@ -1,4 +1,4 @@
-package com.project.safecash.ui.escolta
+package com.project.safecash.ui.agente
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,24 +7,32 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.project.safecash.databinding.FragmentEscoltaDashboardBinding
+import com.project.safecash.R
+import com.project.safecash.databinding.FragmentAgenteDashboardBinding
 import com.project.safecash.ui.adapter.SolicitudAdapter
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class EscoltaDashboardFragment : Fragment() {
+/**
+ * Fragmento que representa el panel principal del Agente Operativo.
+ * Muestra el saldo actual y la lista de tareas/solicitudes asignadas.
+ */
+class AgenteDashboardFragment : Fragment() {
 
-    private var _binding: FragmentEscoltaDashboardBinding? = null
+    private var _binding: FragmentAgenteDashboardBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: EscoltaViewModel by viewModels()
+    
+    // Usamos el nuevo AgenteViewModel
+    private val viewModel: AgenteViewModel by viewModels()
     private lateinit var adapter: SolicitudAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentEscoltaDashboardBinding.inflate(inflater, container, false)
+        _binding = FragmentAgenteDashboardBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -35,23 +43,27 @@ class EscoltaDashboardFragment : Fragment() {
         observeViewModel()
 
         binding.btnCierreTurno.setOnClickListener {
-            // Navegar a Cierre de Turno
+            // Navegación corregida a Cierre de Turno
+            findNavController().navigate(R.id.action_agenteDashboardFragment_to_cierreTurnoFragment)
         }
     }
 
     private fun setupRecyclerView() {
         adapter = SolicitudAdapter { solicitud ->
-            // Ir a detalle de servicio
+            // Navegación al detalle del servicio
+            val action = AgenteDashboardFragmentDirections.actionAgenteDashboardFragmentToDetalleServicioFragment(solicitud.id)
+            findNavController().navigate(action)
         }
-        binding.rvEscoltaTasks.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvEscoltaTasks.adapter = adapter
+        binding.rvAgenteTasks.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvAgenteTasks.adapter = adapter
     }
 
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.escoltaData.collect { escolta ->
-                escolta?.let {
-                    binding.tvEscoltaBalance.text = String.format(Locale.getDefault(), "$ %.2f", it.saldoActual)
+            viewModel.agenteData.collect { agente ->
+                agente?.let {
+                    // Actualización del saldo con el formato centralizado
+                    binding.tvAgenteBalance.text = getString(R.string.balance_format, it.saldoActual)
                 }
             }
         }

@@ -21,8 +21,8 @@
             app:popUpTo="@id/splashFragment"
             app:popUpToInclusive="true" />
         <action
-            android:id="@+id/action_splashFragment_to_escoltaDashboardFragment"
-            app:destination="@id/escoltaDashboardFragment"
+            android:id="@+id/action_splashFragment_to_agenteDashboardFragment"
+            app:destination="@id/agenteDashboardFragment"
             app:popUpTo="@id/splashFragment"
             app:popUpToInclusive="true" />
         <action
@@ -46,8 +46,8 @@
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
         <action
-            android:id="@+id/action_loginFragment_to_escoltaDashboardFragment"
-            app:destination="@id/escoltaDashboardFragment"
+            android:id="@+id/action_loginFragment_to_agenteDashboardFragment"
+            app:destination="@id/agenteDashboardFragment"
             app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
         <action
@@ -80,16 +80,16 @@
     </fragment>
 
     <fragment
-        android:id="@+id/escoltaDashboardFragment"
-        android:name="com.project.safecash.ui.escolta.EscoltaDashboardFragment"
-        android:label="Dashboard Escolta"
-        tools:layout="@layout/fragment_escolta_dashboard">
+        android:id="@+id/agenteDashboardFragment"
+        android:name="com.project.safecash.ui.agente.AgenteDashboardFragment"
+        android:label="Panel Agente"
+        tools:layout="@layout/fragment_agente_dashboard">
         <action
-            android:id="@+id/action_escoltaDashboardFragment_to_cierreTurnoFragment"
-            app:destination="@id/cierreTurnoFragment" />
-        <action
-            android:id="@+id/action_escoltaDashboardFragment_to_detalleServicioFragment"
+            android:id="@+id/action_agenteDashboardFragment_to_detalleServicioFragment"
             app:destination="@id/detalleServicioFragment" />
+        <action
+            android:id="@+id/action_agenteDashboardFragment_to_cierreTurnoFragment"
+            app:destination="@id/cierreTurnoFragment" />
     </fragment>
 
     <fragment
@@ -106,14 +106,14 @@
 
     <fragment
         android:id="@+id/cierreTurnoFragment"
-        android:name="com.project.safecash.ui.escolta.CierreTurnoFragment"
+        android:name="com.project.safecash.ui.agente.CierreTurnoFragment"
         android:label="Cierre de Turno"
         tools:layout="@layout/fragment_cierre_turno" />
 
     <fragment
         android:id="@+id/detalleServicioFragment"
-        android:name="com.project.safecash.ui.escolta.DetalleServicioFragment"
-        android:label="Detalle de Servicio"
+        android:name="com.project.safecash.ui.agente.DetalleServicioFragment"
+        android:label="Detalle Servicio"
         tools:layout="@layout/fragment_detalle_servicio">
         <argument
             android:name="solicitudId"

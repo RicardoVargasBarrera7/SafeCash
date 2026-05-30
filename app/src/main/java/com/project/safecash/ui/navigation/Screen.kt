@@ -4,7 +4,7 @@ sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Login : Screen("login")
     data object Register : Screen("register")
-    data object ClienteDashboard : Screen("cliente_dashboard")
+    data object UserDashboard : Screen("user_dashboard")
     data object AgenteDashboard : Screen("agente_dashboard")
     data object AdminDashboard : Screen("admin_dashboard")
     data object CrearSolicitud : Screen("crear_solicitud")

@@ -6,7 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -25,9 +25,14 @@ import androidx.navigation.NavController
 import com.project.safecash.data.model.User
 import com.project.safecash.ui.navigation.Screen
 
+/**
+ * Pantalla de registro para nuevos usuarios.
+ * Permite a los usuarios crear una cuenta y los redirige automáticamente a su panel de control.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = viewModel()) {
+    // Estados locales para los campos del formulario
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var telefono by remember { mutableStateOf("") }
@@ -35,16 +40,21 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Observación del estado de autenticación
     val authState by viewModel.authState.collectAsState()
     val context = LocalContext.current
 
+    // Efecto que reacciona a los cambios en el estado de autenticación (Éxito o Error)
     LaunchedEffect(authState) {
         if (authState is AuthViewModel.AuthState.Success) {
             Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+            
+            // REDIRECCIÓN: Se corrigió de ClienteDashboard a UserDashboard para mantener la consistencia
             navController.navigate(Screen.UserDashboard.route) {
                 popUpTo(Screen.Register.route) { inclusive = true }
             }
         } else if (authState is AuthViewModel.AuthState.Error) {
+            // Muestra el mensaje de error si el registro falla
             Toast.makeText(context, (authState as AuthViewModel.AuthState.Error).message, Toast.LENGTH_LONG).show()
         }
     }
@@ -55,7 +65,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                 title = { Text("Crear Cuenta", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -69,6 +79,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Campos del formulario
             OutlinedTextField(
                 value = nombre,
                 onValueChange = { nombre = it },
@@ -121,7 +132,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = null)
+                        Icon(imageVector = image, contentDescription = "Mostrar/Ocultar contraseña")
                     }
                 },
                 singleLine = true
@@ -129,6 +140,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Botón de Registro
             Button(
                 onClick = {
                     if (nombre.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty()) {

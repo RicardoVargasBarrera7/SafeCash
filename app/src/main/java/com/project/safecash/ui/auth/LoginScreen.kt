@@ -21,28 +21,46 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.project.safecash.ui.navigation.Screen
 
+/**
+ * LoginScreen es la pantalla principal de autenticación de SafeCash.
+ * Permite a los usuarios ingresar con su correo y contraseña, manejando diferentes roles
+ * de usuario (Admin, Agente Operativo y Usuario).
+ *
+ * @param navController Controlador de navegación para redirigir tras un login exitoso.
+ * @param viewModel ViewModel encargado de la lógica de autenticación y manejo de estados.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewModel()) {
+    // Estados locales para los campos de entrada
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     
+    // Observación del estado de autenticación global
     val authState by viewModel.authState.collectAsState()
     val context = LocalContext.current
 
+    // Efecto secundario que reacciona a los cambios en el estado de autenticación
     LaunchedEffect(authState) {
         if (authState is AuthViewModel.AuthState.Success) {
             val role = (authState as AuthViewModel.AuthState.Success).role
+            
+            // Determinamos la ruta de destino basada en el rol del usuario autenticado
             val route = when (role) {
                 "ADMIN" -> Screen.AdminDashboard.route
-                "ESCOLTA" -> Screen.EscoltaDashboard.route
+                // Se corrigió de EscoltaDashboard a AgenteDashboard para coincidir con Screen.kt
+                "ESCOLTA" -> Screen.AgenteDashboard.route
+                // Se corrigió de ClienteDashboard a UserDashboard (Usuario) para coincidir con Screen.kt
                 else -> Screen.UserDashboard.route
             }
+            
+            // Navegamos al dashboard correspondiente y limpiamos el historial de navegación
             navController.navigate(route) {
                 popUpTo(Screen.Login.route) { inclusive = true }
             }
         } else if (authState is AuthViewModel.AuthState.Error) {
+            // Muestra un mensaje de error si las credenciales son incorrectas o hay fallos de red
             Toast.makeText(context, (authState as AuthViewModel.AuthState.Error).message, Toast.LENGTH_LONG).show()
         }
     }
@@ -62,6 +80,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Sección de bienvenida
             Text(
                 text = "Bienvenido",
                 fontSize = 28.sp,
@@ -74,6 +93,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
+            // Campo de entrada para el correo electrónico
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -85,6 +105,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Campo de entrada para la contraseña con opción de ocultar/mostrar texto
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -95,7 +116,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
                 trailingIcon = {
                     val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = image, contentDescription = null)
+                        Icon(imageVector = image, contentDescription = "Mostrar/Ocultar contraseña")
                     }
                 },
                 singleLine = true
@@ -103,6 +124,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Botón de acción principal para iniciar sesión
             Button(
                 onClick = { viewModel.login(email, password) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -110,12 +132,14 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
                 enabled = authState !is AuthViewModel.AuthState.Loading
             ) {
                 if (authState is AuthViewModel.AuthState.Loading) {
+                    // Muestra un indicador de carga mientras se procesa la solicitud
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                 } else {
                     Text("Iniciar Sesión", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
 
+            // Opción secundaria para usuarios que no tienen cuenta
             TextButton(
                 onClick = { navController.navigate(Screen.Register.route) },
                 modifier = Modifier.padding(top = 16.dp)

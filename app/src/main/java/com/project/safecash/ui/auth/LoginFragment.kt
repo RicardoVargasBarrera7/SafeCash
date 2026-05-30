@@ -13,6 +13,10 @@ import com.project.safecash.R
 import com.project.safecash.databinding.FragmentLoginBinding
 import kotlinx.coroutines.launch
 
+/**
+ * Fragmento encargado del inicio de sesión (Login).
+ * Maneja la entrada de credenciales y redirige al usuario a su panel correspondiente según su rol.
+ */
 class LoginFragment : Fragment() {
 
     private var _binding: FragmentLoginBinding? = null
@@ -23,6 +27,7 @@ class LoginFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        // Inflamos el layout usando View Binding
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -30,6 +35,7 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Acción al pulsar el botón de ingresar
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString()
             val pass = binding.etPassword.text.toString()
@@ -40,13 +46,18 @@ class LoginFragment : Fragment() {
             }
         }
 
+        // Navegación a la pantalla de registro
         binding.btnGoToRegister.setOnClickListener {
+            // ID de acción corregido según el nav_graph.xml
             findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
         }
 
         observeState()
     }
 
+    /**
+     * Observa el estado de autenticación desde el ViewModel para reaccionar ante éxitos o errores.
+     */
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.authState.collect { state ->
@@ -73,16 +84,22 @@ class LoginFragment : Fragment() {
         }
     }
 
+    /**
+     * Redirige al panel correspondiente (Admin, Agente o Usuario) basándose en el rol.
+     */
     private fun navigateToDashboard(role: String) {
-        when (role) {
-            "ADMIN" -> findNavController().navigate(R.id.action_loginFragment_to_adminDashboardFragment)
-            "ESCOLTA" -> findNavController().navigate(R.id.action_loginFragment_to_escoltaDashboardFragment)
-            else -> findNavController().navigate(R.id.action_loginFragment_to_userDashboardFragment)
+        val actionId = when (role) {
+            "ADMIN" -> R.id.action_loginFragment_to_adminDashboardFragment
+            // Se actualizó de Escolta a Agente para mantener la consistencia
+            "ESCOLTA" -> R.id.action_loginFragment_to_agenteDashboardFragment
+            else -> R.id.action_loginFragment_to_userDashboardFragment
         }
+        findNavController().navigate(actionId)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // Liberamos el binding para evitar fugas de memoria
         _binding = null
     }
 }

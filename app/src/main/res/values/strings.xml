@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">SafeCash</string>
+    <string name="balance_format">$ %.2f</string>
+    <string name="admin_dashboard_title">Panel de Control Admin</string>
+    <string name="centro_acopio_label">Centro de Acopio</string>
+    <string name="agentes_operativos_label">Agentes Operativos</string>
+    <string name="usuarios_label">Usuarios</string>
+    <string name="movimientos_label">Movimientos</string>
+    <string name="reportes_label">Reportes</string>
+    <string name="no_observaciones">Sin observaciones</string>
 </resources>

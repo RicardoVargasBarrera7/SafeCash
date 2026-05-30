@@ -1,4 +1,4 @@
-package com.project.safecash.ui.escolta
+package com.project.safecash.ui.agente
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,18 +9,26 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.project.safecash.R
 import com.project.safecash.data.model.CierreTurno
 import com.project.safecash.databinding.FragmentCierreTurnoBinding
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.Locale
 
+/**
+ * Fragmento para que el Agente Operativo realice el cierre de su turno
+ * y devuelva el saldo acumulado al Centro de Acopio.
+ */
 class CierreTurnoFragment : Fragment() {
 
     private var _binding: FragmentCierreTurnoBinding? = null
     private val binding get() = _binding!!
-    private val viewModel: EscoltaViewModel by viewModels()
+    
+    // Usamos el AgenteViewModel compartido
+    private val viewModel: AgenteViewModel by viewModels()
     private val firestore = FirebaseFirestore.getInstance()
 
     override fun onCreateView(
@@ -43,17 +51,24 @@ class CierreTurnoFragment : Fragment() {
 
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.escoltaData.collect { escolta ->
-                escolta?.let {
-                    binding.tvSaldoDevolver.text = String.format(Locale.getDefault(), "$ %.2f", it.saldoActual)
+            viewModel.agenteData.collect { agente ->
+                agente?.let {
+                    // Mostrar el saldo actual que debe ser devuelto
+                    binding.tvSaldoDevolver.text = getString(R.string.balance_format, it.saldoActual)
                 }
             }
         }
     }
 
+    /**
+     * Lógica de negocio para cerrar el turno:
+     * 1. Crea un registro en 'cierresTurno'.
+     * 2. Reinicia el saldo del agente a 0.
+     * 3. Incrementa el saldo disponible en el Centro de Acopio.
+     */
     private fun realizarCierre() {
-        val escolta = viewModel.escoltaData.value ?: return
-        val saldoADevolver = escolta.saldoActual
+        val agente = viewModel.agenteData.value ?: return
+        val saldoADevolver = agente.saldoActual
 
         if (saldoADevolver < 0) {
             Toast.makeText(requireContext(), "Saldo inválido para cierre", Toast.LENGTH_SHORT).show()
@@ -70,20 +85,20 @@ class CierreTurnoFragment : Fragment() {
                     val cierreRef = firestore.collection("cierresTurno").document()
                     val cierre = CierreTurno(
                         id = cierreRef.id,
-                        escoltaId = escolta.id,
+                        agenteId = agente.id, // Actualizado de escoltaId
                         saldoDevuelto = saldoADevolver
                     )
                     transaction.set(cierreRef, cierre)
 
-                    // 2. Actualizar saldo de escolta a cero
-                    val escoltaRef = firestore.collection("escoltas").document(escolta.id)
-                    transaction.update(escoltaRef, "saldoActual", 0.0)
-                    transaction.update(escoltaRef, "estado", "INACTIVO")
+                    // 2. Actualizar datos del agente
+                    val agenteRef = firestore.collection("agentes").document(agente.id)
+                    transaction.update(agenteRef, "saldoActual", 0.0)
+                    transaction.update(agenteRef, "estado", "INACTIVO")
 
-                    // 3. Actualizar saldo de Centro de Acopio
+                    // 3. Actualizar saldo del Centro de Acopio Principal
                     val acopioRef = firestore.collection("centroAcopio").document("principal")
-                    transaction.update(acopioRef, "saldoDisponible", com.google.firebase.firestore.FieldValue.increment(saldoADevolver))
-                    transaction.update(acopioRef, "fechaActualizacion", com.google.firebase.Timestamp.now())
+                    transaction.update(acopioRef, "saldoDisponible", FieldValue.increment(saldoADevolver))
+                    transaction.update(acopioRef, "fechaActualizacion", Timestamp.now())
                 }.await()
 
                 Toast.makeText(requireContext(), "Cierre de turno exitoso", Toast.LENGTH_SHORT).show()
