@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.compose)
-    id("androidx.navigation.safeargs.kotlin") // Aplicación directa para asegurar la generación de Args
 }
 
 android {
@@ -32,7 +31,7 @@ android {
             )
         }
     }
-    
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -44,8 +43,6 @@ android {
 
     buildFeatures {
         compose = true
-        viewBinding = true
-        resValues = true
     }
 
     packaging {
@@ -56,13 +53,10 @@ android {
 }
 
 dependencies {
-    // Core & UI
+    // Core KTX
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    
-    // Firebase Stack
+
+    // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
@@ -86,11 +80,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.activity.compose)
-    
-    // Navegación (Compose & Fragments)
+
+    // Navegación Compose
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
 
     // Testing
     testImplementation(libs.junit)

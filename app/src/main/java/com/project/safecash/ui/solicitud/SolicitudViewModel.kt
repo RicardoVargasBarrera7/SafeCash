@@ -27,9 +27,9 @@ class SolicitudViewModel : ViewModel() {
     }
 
     sealed class SolicitudState {
-        object Idle : SolicitudState()
-        object Loading : SolicitudState()
-        object Success : SolicitudState()
+        data object Idle : SolicitudState()
+        data object Loading : SolicitudState()
+        data object Success : SolicitudState()
         data class Error(val message: String) : SolicitudState()
     }
 }
