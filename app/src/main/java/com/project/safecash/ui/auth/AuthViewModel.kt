@@ -4,10 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.project.safecash.data.model.User
 import com.project.safecash.data.repository.AuthRepository
+import com.google.firebase.auth.FirebaseAuthException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel que gestiona los estados de autenticación.
+ */
 class AuthViewModel : ViewModel() {
     private val repository = AuthRepository()
 
@@ -20,9 +24,9 @@ class AuthViewModel : ViewModel() {
             val result = repository.login(email, pass)
             result.onSuccess { uid ->
                 val role = repository.getUserRole(uid)
-                _authState.value = AuthState.Success(role ?: "CLIENTE")
+                _authState.value = AuthState.Success(role ?: "USUARIO")
             }.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Error en login")
+                _authState.value = AuthState.Error(it.localizedMessage ?: "Error en login")
             }
         }
     }
@@ -33,8 +37,13 @@ class AuthViewModel : ViewModel() {
             val result = repository.register(user, pass)
             result.onSuccess {
                 _authState.value = AuthState.Success(user.rol)
-            }.onFailure {
-                _authState.value = AuthState.Error(it.message ?: "Error en registro")
+            }.onFailure { e ->
+                // Captura errores específicos de Firebase para dar mejor feedback
+                val message = when (e) {
+                    is FirebaseAuthException -> "Error de Firebase: ${e.message}"
+                    else -> e.localizedMessage ?: "Error en el registro"
+                }
+                _authState.value = AuthState.Error(message)
             }
         }
     }

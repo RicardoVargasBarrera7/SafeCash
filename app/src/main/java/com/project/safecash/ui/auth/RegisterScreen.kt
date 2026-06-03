@@ -90,7 +90,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                     modifier = Modifier.align(Alignment.Start)
                 )
                 Text(
-                    text = "Únete a la red financiera de SafeCash",
+                    text = "Únete a SafeCash y gestiona tu efectivo con seguridad",
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.align(Alignment.Start).padding(top = 4.dp, bottom = 32.dp)
@@ -175,7 +175,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                                         correo = email,
                                         telefono = telefono,
                                         direccionPrincipal = direccion,
-                                        rol = "USUARIO"
+                                        rol = "USUARIO" // Forzado a USUARIO en producción
                                     )
                                     viewModel.register(user, password)
                                 } else {
@@ -192,7 +192,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                             if (authState is AuthViewModel.AuthState.Loading) {
                                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                             } else {
-                                Text("Crear Cuenta", style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp))
+                                Text("Registrarse", style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp))
                             }
                         }
                     }
