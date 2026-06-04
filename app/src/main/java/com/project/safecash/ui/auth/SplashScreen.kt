@@ -34,9 +34,9 @@ fun SplashScreen(navController: NavController) {
         if (uid != null) {
             val role = authRepository.getUserRole(uid)
             val route = when (role) {
-                "ADMIN"             -> Screen.AdminDashboard.route
-                "AGENTE_OPERATIVO"  -> Screen.AgenteDashboard.route
-                else                -> Screen.UserDashboard.route
+                "ADMIN"  -> Screen.AdminDashboard.route
+                "AGENTE" -> Screen.AgenteDashboard.route
+                else     -> Screen.UserDashboard.route
             }
             navController.navigate(route) {
                 popUpTo(Screen.Splash.route) { inclusive = true }

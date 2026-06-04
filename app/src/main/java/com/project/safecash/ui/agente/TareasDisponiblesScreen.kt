@@ -1,32 +1,28 @@
 package com.project.safecash.ui.agente
 
-import androidx.compose.foundation.background
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.NorthEast
-import androidx.compose.material.icons.filled.SouthWest
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.project.safecash.data.model.Solicitud
-import com.project.safecash.ui.navigation.Screen
 import com.project.safecash.ui.theme.*
-import java.text.SimpleDateFormat
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,21 +31,50 @@ fun TareasDisponiblesScreen(
     navController: NavController,
     viewModel: AgenteViewModel = viewModel()
 ) {
-    val tareasDisponibles by viewModel.tareasDisponibles.collectAsStateWithLifecycle()
+    // Usamos un nombre diferente para la lista local para evitar shadowing
+    val listaTareasDisponibles by viewModel.tareasDisponibles.collectAsStateWithLifecycle()
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { 
+                showSuccessDialog = false
+                navController.popBackStack()
+            },
+            icon = { Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(48.dp)) },
+            title = { Text("¡Servicio Asignado!", fontWeight = FontWeight.Bold) },
+            text = { Text("Has aceptado el servicio con éxito. Ahora aparecerá en tu lista de tareas asignadas.") },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        showSuccessDialog = false
+                        navController.popBackStack()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Ir a mi Dashboard")
+                }
+            },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = SurfaceWhite
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Servicios Disponibles", fontWeight = FontWeight.Bold) },
+                title = { Text("Servicios en la Zona", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundGray)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundLight)
             )
         },
-        containerColor = BackgroundGray
+        containerColor = BackgroundLight
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -61,55 +86,31 @@ fun TareasDisponiblesScreen(
         ) {
             item {
                 Text(
-                    text = "${tareasDisponibles.size} Oportunidades cerca de ti",
+                    text = "Hay ${listaTareasDisponibles.size} solicitudes esperando",
                     style = MaterialTheme.typography.labelLarge,
-                    color = TextLight,
+                    color = TextSecondary,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
 
-            if (tareasDisponibles.isEmpty()) {
+            if (listaTareasDisponibles.isEmpty()) {
                 item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(top = 60.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = Color.White,
-                            modifier = Modifier.size(80.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Info, 
-                                contentDescription = null, 
-                                modifier = Modifier.padding(20.dp), 
-                                tint = TextLight.copy(alpha = 0.5f)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "No hay servicios disponibles", 
-                            style = MaterialTheme.typography.titleMedium,
-                            color = TextDark,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "Vuelve a consultar más tarde", 
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextLight
-                        )
-                    }
+                    EmptyDiscoveryState()
                 }
             }
 
-            items(tareasDisponibles) { tarea ->
+            items(listaTareasDisponibles, key = { it.id }) { solicitudItem ->
                 TareaDisponibleCard(
-                    solicitud = tarea,
-                    onVerDetalle = {
-                        navController.navigate(Screen.DetalleServicio.createRoute(tarea.id))
-                    },
+                    solicitud = solicitudItem,
                     onAceptar = {
-                        viewModel.aceptarTarea(tarea.id)
+                        // Llamada explícita al ViewModel pasando el objeto Solicitud completo
+                        viewModel.aceptarTarea(
+                            solicitud = solicitudItem,
+                            onSuccess = { showSuccessDialog = true },
+                            onError = { errorMsg ->
+                                Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                            }
+                        )
                     }
                 )
             }
@@ -118,18 +119,17 @@ fun TareasDisponiblesScreen(
 }
 
 @Composable
-private fun TareaDisponibleCard(
-    solicitud: Solicitud,
-    onVerDetalle: () -> Unit,
-    onAceptar: () -> Unit
-) {
-    val dateFormat = remember { SimpleDateFormat("HH:mm - dd MMM", Locale.getDefault()) }
+fun TareaDisponibleCard(solicitud: Solicitud, onAceptar: () -> Unit) {
+    val formatter = remember {
+        val symbols = DecimalFormatSymbols(Locale.getDefault()).apply { groupingSeparator = '.' }
+        DecimalFormat("$ #,###", symbols)
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
@@ -137,79 +137,57 @@ private fun TareaDisponibleCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        shape = CircleShape,
-                        color = if (solicitud.tipoServicio == "RETIRO") ErrorRed.copy(alpha = 0.1f) else AccentGreen.copy(alpha = 0.1f),
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (solicitud.tipoServicio == "RETIRO") Icons.Default.SouthWest else Icons.Default.NorthEast,
-                            contentDescription = null,
-                            tint = if (solicitud.tipoServicio == "RETIRO") ErrorRed else AccentGreen,
-                            modifier = Modifier.padding(10.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (solicitud.tipoServicio == "RECOLECCION") ErrorRed.copy(alpha = 0.1f) else SuccessGreen.copy(alpha = 0.1f)
+                ) {
                     Text(
-                        text = solicitud.tipoServicio,
-                        style = MaterialTheme.typography.titleMedium,
+                        text = if (solicitud.tipoServicio == "RECOLECCION") "RECAUDO" else "BASE",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = TextDark
+                        color = if (solicitud.tipoServicio == "RECOLECCION") ErrorRed else SuccessGreen
                     )
                 }
-                
                 Text(
-                    text = "$ %.2f".format(solicitud.monto),
+                    text = formatter.format(solicitud.monto),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = PrimaryBlue
+                    fontWeight = FontWeight.Black,
+                    color = TextPrimary
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
+            
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.LocationOn, contentDescription = null, tint = TextLight, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = solicitud.direccion,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextLight,
-                    maxLines = 1
-                )
+                Icon(Icons.Default.LocationOn, contentDescription = null, tint = AccentBlue, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = solicitud.direccion, style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
             }
-
-            Text(
-                text = "Publicado: ${dateFormat.format(solicitud.fechaCreacion.toDate())}",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextLight.copy(alpha = 0.7f),
-                modifier = Modifier.padding(top = 4.dp, start = 20.dp)
-            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Button(
+                onClick = onAceptar,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
             ) {
-                OutlinedButton(
-                    onClick = onVerDetalle,
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BackgroundGray)
-                ) {
-                    Text("Detalles", color = TextDark)
-                }
-                Button(
-                    onClick = onAceptar,
-                    modifier = Modifier.weight(1f).height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlue)
-                ) {
-                    Text("Aceptar", fontWeight = FontWeight.Bold)
-                }
+                Text("Aceptar Servicio", fontWeight = FontWeight.Bold)
             }
         }
+    }
+}
+
+@Composable
+fun EmptyDiscoveryState() {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 80.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(Icons.Default.Radar, contentDescription = null, modifier = Modifier.size(80.dp), tint = TextTertiary.copy(alpha = 0.2f))
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Buscando solicitudes...", fontWeight = FontWeight.Bold, color = TextPrimary)
+        Text("No hay pendientes en este momento", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
     }
 }

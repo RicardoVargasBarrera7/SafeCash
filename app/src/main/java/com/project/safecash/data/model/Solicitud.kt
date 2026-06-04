@@ -1,18 +1,30 @@
 package com.project.safecash.data.model
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.IgnoreExtraProperties
 
 /**
- * Modelo que representa una solicitud de servicio en el sistema.
+ * Modelo de solicitud optimizado para Firebase.
+ * Incluye registros de tiempo para cada etapa del proceso.
  */
+@IgnoreExtraProperties
 data class Solicitud(
-    val id: String = "",
-    val usuarioId: String = "",
-    val agenteId: String? = null, // Cambiado de escoltaId a agenteId
-    val tipoServicio: String = "", // "RECOLECCION", "ENTREGA"
-    val monto: Double = 0.0,
-    val direccion: String = "",
-    val observaciones: String = "",
-    val fechaCreacion: Timestamp = Timestamp.now(),
-    val estado: String = "PENDIENTE" // "PENDIENTE", "ASIGNADA", "EN_PROCESO", "FINALIZADA", "CANCELADA"
+    var id: String = "",
+    var usuarioId: String = "",
+    var agenteId: String? = null,
+    var agenteNombre: String? = null,
+    var usuarioNombre: String? = null,
+    var tipoServicio: String = "", // "RETIRO" o "DEPÓSITO"
+    var monto: Double = 0.0,
+    var direccion: String = "",
+    var latitudDestino: Double = 0.0,
+    var longitudDestino: Double = 0.0,
+    var observaciones: String = "",
+    var fechaCreacion: Timestamp = Timestamp.now(),
+    var fechaAsignacion: Timestamp? = null,
+    var fechaEnCamino: Timestamp? = null,
+    var fechaEnProceso: Timestamp? = null,
+    var fechaEntregado: Timestamp? = null,
+    var fechaFinalizacion: Timestamp? = null, // Cuando el usuario confirma
+    var estado: String = "PENDIENTE" // PENDIENTE, ASIGNADA, EN_CAMINO, EN_PROCESO, ENTREGADO, FINALIZADA
 )

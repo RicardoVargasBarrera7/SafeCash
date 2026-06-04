@@ -6,6 +6,14 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Register : Screen("register")
 
+    // General
+    data object Profile : Screen("profile")
+    data object ReporteMovimientos : Screen("reporte_movimientos?agenteId={agenteId}") {
+        fun createRoute(agenteId: String? = null) = 
+            if (agenteId != null) "reporte_movimientos?agenteId=$agenteId" else "reporte_movimientos"
+    }
+    data object Notificaciones : Screen("notificaciones")
+
     // Usuario / Cliente
     data object UserDashboard : Screen("user_dashboard")
     data object CrearSolicitud : Screen("crear_solicitud")
@@ -23,4 +31,5 @@ sealed class Screen(val route: String) {
     data object AdminAgentes : Screen("admin_agentes")
     data object AdminUsuarios : Screen("admin_usuarios")
     data object AdminMovimientos : Screen("admin_movimientos")
+    data object AdminMonitoreo : Screen("admin_monitoreo")
 }

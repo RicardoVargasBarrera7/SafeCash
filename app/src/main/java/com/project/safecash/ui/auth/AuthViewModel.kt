@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.project.safecash.data.model.User
 import com.project.safecash.data.repository.AuthRepository
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -25,8 +27,13 @@ class AuthViewModel : ViewModel() {
             result.onSuccess { uid ->
                 val role = repository.getUserRole(uid)
                 _authState.value = AuthState.Success(role ?: "USUARIO")
-            }.onFailure {
-                _authState.value = AuthState.Error(it.localizedMessage ?: "Error en login")
+            }.onFailure { e ->
+                val message = when (e) {
+                    is FirebaseAuthInvalidCredentialsException -> "Contraseña incorrecta o correo inválido."
+                    is FirebaseAuthInvalidUserException -> "El usuario no existe."
+                    else -> e.localizedMessage ?: "Error en login"
+                }
+                _authState.value = AuthState.Error(message)
             }
         }
     }

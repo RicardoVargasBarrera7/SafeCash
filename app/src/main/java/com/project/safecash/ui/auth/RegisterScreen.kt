@@ -18,17 +18,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.project.safecash.data.model.User
 import com.project.safecash.ui.navigation.Screen
-import com.project.safecash.ui.theme.GradientEnd
-import com.project.safecash.ui.theme.GradientStart
+import com.project.safecash.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +42,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
 
     LaunchedEffect(authState) {
         if (authState is AuthViewModel.AuthState.Success) {
-            Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Cuenta creada con éxito", Toast.LENGTH_SHORT).show()
             navController.navigate(Screen.UserDashboard.route) {
                 popUpTo(Screen.Register.route) { inclusive = true }
             }
@@ -59,7 +56,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(GradientStart, GradientEnd)
+                    colors = listOf(PrimaryBlue, PrimaryDark)
                 )
             )
     ) {
@@ -70,7 +67,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
         ) {
             IconButton(
                 onClick = { navController.popBackStack() },
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(8.dp)
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
             }
@@ -79,26 +76,26 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                    .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Crea tu cuenta",
-                    style = MaterialTheme.typography.displaySmall,
+                    text = "Crea tu Cuenta",
+                    style = MaterialTheme.typography.headlineLarge,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Start)
+                    fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = "Únete a SafeCash y gestiona tu efectivo con seguridad",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.align(Alignment.Start).padding(top = 4.dp, bottom = 32.dp)
+                    text = "Completa tus datos para empezar",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.6f)
                 )
+
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(32.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Column(
@@ -108,21 +105,21 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                         OutlinedTextField(
                             value = nombre,
                             onValueChange = { nombre = it },
-                            label = { Text("Nombre completo") },
-                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                            label = { Text("Nombre Completo") },
+                            leadingIcon = { Icon(Icons.Default.Person, null, tint = AccentBlue) },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             singleLine = true
                         )
 
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
-                            label = { Text("Correo electrónico") },
-                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                            label = { Text("Correo Electrónico") },
+                            leadingIcon = { Icon(Icons.Default.Email, null, tint = AccentBlue) },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             singleLine = true
                         )
 
@@ -130,20 +127,20 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                             value = telefono,
                             onValueChange = { telefono = it },
                             label = { Text("Teléfono") },
-                            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Default.Phone, null, tint = AccentBlue) },
                             modifier = Modifier.fillMaxWidth(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             singleLine = true
                         )
 
                         OutlinedTextField(
                             value = direccion,
                             onValueChange = { direccion = it },
-                            label = { Text("Dirección principal") },
-                            leadingIcon = { Icon(Icons.Default.Home, contentDescription = null) },
+                            label = { Text("Dirección Principal") },
+                            leadingIcon = { Icon(Icons.Default.Home, null, tint = AccentBlue) },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             singleLine = true
                         )
 
@@ -151,53 +148,52 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                             value = password,
                             onValueChange = { password = it },
                             label = { Text("Contraseña") },
-                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Default.LockOpen, null, tint = AccentBlue) },
                             modifier = Modifier.fillMaxWidth(),
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             trailingIcon = {
-                                val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                    Icon(imageVector = image, contentDescription = null)
+                                    Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null)
                                 }
                             },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             singleLine = true
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Button(
                             onClick = {
-                                if (nombre.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty()) {
-                                    val user = User(
-                                        nombre = nombre,
-                                        correo = email,
-                                        telefono = telefono,
-                                        direccionPrincipal = direccion,
-                                        rol = "USUARIO" // Forzado a USUARIO en producción
+                                if (nombre.isNotBlank() && email.isNotBlank() && password.isNotBlank()) {
+                                    viewModel.register(
+                                        User(
+                                            nombre = nombre,
+                                            correo = email,
+                                            telefono = telefono,
+                                            direccionPrincipal = direccion,
+                                            rol = "USUARIO"
+                                        ), 
+                                        password
                                     )
-                                    viewModel.register(user, password)
                                 } else {
-                                    Toast.makeText(context, "Completa los campos obligatorios", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
                                 }
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            enabled = authState !is AuthViewModel.AuthState.Loading,
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                            modifier = Modifier.fillMaxWidth().height(58.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark),
+                            enabled = authState !is AuthViewModel.AuthState.Loading
                         ) {
                             if (authState is AuthViewModel.AuthState.Loading) {
-                                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                             } else {
-                                Text("Registrarse", style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp))
+                                Text("Registrarme", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                             }
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }

@@ -118,8 +118,9 @@ fun CierreTurnoScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // CORRECCIÓN: Se debe mostrar saldoActual (efectivo en mano del agente)
                     Text(
-                        text = stringResource(R.string.balance_format, userData?.saldo ?: 0.0),
+                        text = stringResource(R.string.balance_format, userData?.saldoActual ?: 0.0),
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.Black,
                         color = PrimaryBlue
@@ -141,7 +142,7 @@ fun CierreTurnoScreen(
                     Icon(Icons.Default.Info, contentDescription = null, tint = ErrorRed)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Esta acción es irreversible y reiniciará tu balance a $0.00.",
+                        text = "Esta acción es irreversible y reiniciará tu efectivo en mano a $0.00.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextDark
                     )
@@ -156,7 +157,8 @@ fun CierreTurnoScreen(
                 Button(
                     onClick = {
                         val user = userData ?: return@Button
-                        if (user.saldo < 0) {
+                        val montoADevolver = user.saldoActual
+                        if (montoADevolver < 0) {
                             Toast.makeText(context, "Saldo inválido", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
@@ -169,16 +171,18 @@ fun CierreTurnoScreen(
                                     val cierre = CierreTurno(
                                         id = cierreRef.id,
                                         agenteId = user.id,
-                                        saldoDevuelto = user.saldo
+                                        saldoDevuelto = montoADevolver
                                     )
                                     transaction.set(cierreRef, cierre)
 
                                     val agenteRef = firestore.collection("usuarios").document(user.id)
-                                    transaction.update(agenteRef, "saldo", 0.0)
-                                    transaction.update(agenteRef, "estado", "INACTIVO")
+                                    // CORRECCIÓN: Reiniciar saldoActual y baseAsignada
+                                    transaction.update(agenteRef, "saldoActual", 0.0)
+                                    transaction.update(agenteRef, "baseAsignada", 0.0)
+                                    transaction.update(agenteRef, "estado", "ACTIVO") // Vuelve a estado normal (no EN_SERVICIO)
 
                                     val acopioRef = firestore.collection("centroAcopio").document("principal")
-                                    transaction.update(acopioRef, "saldoDisponible", FieldValue.increment(user.saldo))
+                                    transaction.update(acopioRef, "saldoDisponible", FieldValue.increment(montoADevolver))
                                     transaction.update(acopioRef, "fechaActualizacion", Timestamp.now())
                                 }.await()
 

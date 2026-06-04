@@ -1,15 +1,13 @@
 package com.project.safecash.ui.auth
 
 import android.widget.Toast
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,17 +16,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.project.safecash.ui.navigation.Screen
-import com.project.safecash.ui.theme.GradientEnd
-import com.project.safecash.ui.theme.GradientStart
+import com.project.safecash.ui.theme.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
@@ -42,9 +38,9 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
         when (val state = authState) {
             is AuthViewModel.AuthState.Success -> {
                 val route = when (state.role) {
-                    "ADMIN"            -> Screen.AdminDashboard.route
-                    "AGENTE_OPERATIVO" -> Screen.AgenteDashboard.route
-                    else               -> Screen.UserDashboard.route
+                    "ADMIN"  -> Screen.AdminDashboard.route
+                    "AGENTE" -> Screen.AgenteDashboard.route
+                    else     -> Screen.UserDashboard.route
                 }
                 navController.navigate(route) {
                     popUpTo(Screen.Login.route) { inclusive = true }
@@ -62,10 +58,20 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(GradientStart, GradientEnd)
+                    colors = listOf(PrimaryBlue, PrimaryDark)
                 )
             )
     ) {
+        // Elementos decorativos de fondo
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(220.dp)
+                .offset(x = 60.dp, y = (-60).dp),
+            shape = RoundedCornerShape(110.dp),
+            color = AccentBlue.copy(alpha = 0.08f)
+        ) {}
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -73,120 +79,135 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo / Branding Area
+            // Logo / Icono principal refinado
             Surface(
-                modifier = Modifier.size(80.dp),
-                shape = RoundedCornerShape(20.dp),
-                color = Color.White.copy(alpha = 0.1f)
+                modifier = Modifier.size(90.dp),
+                shape = RoundedCornerShape(28.dp),
+                color = SurfaceWhite.copy(alpha = 0.12f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
             ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.padding(20.dp)
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(44.dp)
+                    )
+                }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             Text(
                 text = "SafeCash",
-                style = MaterialTheme.typography.displayMedium,
+                style = MaterialTheme.typography.displaySmall,
                 color = Color.White,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Black,
+                letterSpacing = (-1).sp
             )
-            
             Text(
-                text = "Tu efectivo, seguro y al alcance",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.padding(top = 4.dp)
+                text = "Gestiona tu efectivo con seguridad",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.6f)
             )
 
             Spacer(modifier = Modifier.height(48.dp))
 
+            // Formulario en Card Moderno
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                shape = RoundedCornerShape(32.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.padding(28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
                     Text(
                         text = "Bienvenido",
                         style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
                         modifier = Modifier.align(Alignment.Start)
                     )
                     Text(
-                        text = "Ingresa tus credenciales",
+                        text = "Inicia sesión para continuar",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.Start).padding(bottom = 24.dp)
+                        color = TextSecondary,
+                        modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
                     )
 
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("Correo electrónico") },
-                        leadingIcon = { Icon(Icons.Default.Mail, contentDescription = null) },
+                        label = { Text("Email") },
+                        leadingIcon = { Icon(Icons.Default.Email, null, tint = AccentBlue) },
                         modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AccentBlue,
+                            unfocusedBorderColor = BorderLight,
+                            cursorColor = AccentBlue
+                        )
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Contraseña") },
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                        leadingIcon = { Icon(Icons.Default.Lock, null, tint = AccentBlue) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         trailingIcon = {
-                            val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(imageVector = image, contentDescription = null)
+                                Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null, tint = TextTertiary)
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AccentBlue,
+                            unfocusedBorderColor = BorderLight,
+                            cursorColor = AccentBlue
+                        )
                     )
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Button(
                         onClick = { viewModel.login(email, password) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(12.dp),
+                            .height(60.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark),
                         enabled = authState !is AuthViewModel.AuthState.Loading,
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
                     ) {
                         if (authState is AuthViewModel.AuthState.Loading) {
-                            CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                         } else {
-                            Text("Entrar", style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp))
+                            Text("Ingresar", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
                         }
                     }
                 }
             }
 
+            Spacer(modifier = Modifier.height(32.dp))
+
             TextButton(
                 onClick = { navController.navigate(Screen.Register.route) },
-                modifier = Modifier.padding(top = 24.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = Color.White)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text("¿Nuevo por aquí? Crea una cuenta", fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "¿No tienes cuenta? Regístrate aquí",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
             }
         }
     }

@@ -1,13 +1,15 @@
 package com.project.safecash.ui.user
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.CallMade
+import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,19 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.project.safecash.R
 import com.project.safecash.data.model.Solicitud
-import com.project.safecash.data.repository.AuthRepository
 import com.project.safecash.ui.navigation.Screen
 import com.project.safecash.ui.theme.*
-import java.text.SimpleDateFormat
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,42 +36,91 @@ import java.util.*
 fun UserDashboardScreen(navController: NavController, viewModel: UserViewModel = viewModel()) {
     val userData by viewModel.userData.collectAsStateWithLifecycle()
     val solicitudes by viewModel.solicitudes.collectAsStateWithLifecycle()
-    val authRepository = remember { AuthRepository() }
+    val notifLlegada by viewModel.notificacionLlegada.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(notifLlegada) {
+        notifLlegada?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Long,
+                actionLabel = "Ok"
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadData()
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = "Hola, ${userData?.nombre ?: "Usuario"}",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = TextDark
-                        )
-                        Text(
-                            text = "Bienvenido de nuevo",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextLight
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { navController.navigate(Screen.Profile.route) }
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(40.dp),
+                            shape = CircleShape,
+                            color = AccentBlue
+                        ) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.padding(8.dp),
+                                tint = Color.White
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Hola, ${userData?.nombre ?: "Usuario"}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "Ver mi perfil",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = AccentBlue
+                            )
+                        }
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = {
-                            authRepository.logout()
-                            navController.navigate(Screen.Login.route) {
-                                popUpTo(0) { inclusive = true }
+                    Box {
+                        IconButton(onClick = { 
+                            if (notifLlegada != null) {
+                                // Podríamos navegar a una pantalla de notificaciones o mostrar un diálogo
+                                viewModel.clearNotification()
                             }
-                        },
-                        modifier = Modifier.background(BackgroundGray, CircleShape)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout", tint = ErrorRed)
+                        }) {
+                            Icon(
+                                Icons.Default.Notifications, 
+                                contentDescription = "Notificaciones", 
+                                tint = if (notifLlegada != null) WarningOrange else TextSecondary
+                            )
+                        }
+                        if (notifLlegada != null) {
+                            Surface(
+                                color = ErrorRed,
+                                shape = CircleShape,
+                                modifier = Modifier.size(8.dp).align(Alignment.TopEnd).offset(x = (-8).dp, y = (8).dp)
+                            ) {}
+                        }
+                    }
+                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Configuración", tint = TextSecondary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundGray)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundLight)
             )
         },
-        containerColor = BackgroundGray
+        containerColor = BackgroundLight
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -91,17 +140,17 @@ fun UserDashboardScreen(navController: NavController, viewModel: UserViewModel =
                 ) {
                     QuickActionButton(
                         text = "Nueva Solicitud",
-                        icon = Icons.Default.AddCircle,
+                        icon = Icons.Default.AddCard,
                         containerColor = AccentBlue,
                         modifier = Modifier.weight(1f),
                         onClick = { navController.navigate(Screen.CrearSolicitud.route) }
                     )
                     QuickActionButton(
-                        text = "Historial",
+                        text = "Historial Completo",
                         icon = Icons.Default.History,
-                        containerColor = SecondaryBlue,
+                        containerColor = PrimaryBlue,
                         modifier = Modifier.weight(1f),
-                        onClick = { /* Navegar a historial */ }
+                        onClick = { navController.navigate(Screen.ReporteMovimientos.route) }
                     )
                 }
             }
@@ -113,21 +162,19 @@ fun UserDashboardScreen(navController: NavController, viewModel: UserViewModel =
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Actividad Reciente",
+                        text = "Actividad de Hoy",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextDark
+                        color = TextPrimary
                     )
-                    TextButton(onClick = { /* Ver todo */ }) {
-                        Text("Ver todo", color = AccentBlue)
+                    TextButton(onClick = { navController.navigate(Screen.ReporteMovimientos.route) }) {
+                        Text("Ver historial", color = AccentBlue, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
 
             if (solicitudes.isEmpty()) {
-                item {
-                    EmptyActivityState()
-                }
+                item { EmptyActivityState() }
             } else {
                 items(solicitudes) { solicitud ->
                     SolicitudItem(solicitud = solicitud) {
@@ -143,6 +190,14 @@ fun UserDashboardScreen(navController: NavController, viewModel: UserViewModel =
 
 @Composable
 fun BalanceCard(balance: Double) {
+    val formatter = remember {
+        val symbols = DecimalFormatSymbols(Locale.getDefault()).apply {
+            groupingSeparator = '.'
+            decimalSeparator = ','
+        }
+        DecimalFormat("$ #,###.##", symbols)
+    }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -150,160 +205,94 @@ fun BalanceCard(balance: Double) {
     ) {
         Box(
             modifier = Modifier
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(CardGradientStart, CardGradientEnd)
-                    )
-                )
+                .background(brush = Brush.horizontalGradient(GradientAccent))
                 .padding(24.dp)
                 .fillMaxWidth()
         ) {
             Column {
+                Text(text = "Tu Saldo Digital", color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelLarge)
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Saldo Disponible",
-                    color = Color.White.copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.labelLarge
+                    text = formatter.format(balance),
+                    style = MaterialTheme.typography.displayMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = stringResource(R.string.balance_format, balance),
-                        style = MaterialTheme.typography.displayMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
             Icon(
                 Icons.Default.AccountBalanceWallet,
                 contentDescription = null,
-                tint = Color.White.copy(alpha = 0.2f),
-                modifier = Modifier
-                    .size(80.dp)
-                    .align(Alignment.CenterEnd)
-                    .offset(x = 20.dp)
+                tint = Color.White.copy(alpha = 0.1f),
+                modifier = Modifier.size(100.dp).align(Alignment.CenterEnd).offset(x = 20.dp)
             )
         }
     }
 }
 
 @Composable
-fun QuickActionButton(
-    text: String,
-    icon: ImageVector,
-    containerColor: Color,
-    modifier: Modifier,
-    onClick: () -> Unit
-) {
+fun QuickActionButton(text: String, icon: ImageVector, containerColor: Color, modifier: Modifier, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = modifier.height(110.dp),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(containerColor = containerColor),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
         contentPadding = PaddingValues(16.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
+        Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.SpaceBetween) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp), tint = Color.White)
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
+            Text(text = text, style = MaterialTheme.typography.labelLarge, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SolicitudItem(solicitud: Solicitud, onClick: () -> Unit = {}) {
+fun SolicitudItem(solicitud: Solicitud, onClick: () -> Unit) {
+    val formatter = remember {
+        val symbols = DecimalFormatSymbols(Locale.getDefault()).apply {
+            groupingSeparator = '.'
+            decimalSeparator = ','
+        }
+        DecimalFormat("$ #,###", symbols)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, BorderLight)
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    shape = CircleShape,
-                    color = BackgroundGray,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = if (solicitud.tipoServicio == "RETIRO") Icons.Default.SouthWest else Icons.Default.NorthEast,
-                        contentDescription = null,
-                        modifier = Modifier.padding(12.dp),
-                        tint = if (solicitud.tipoServicio == "RETIRO") ErrorRed else AccentGreen
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = solicitud.tipoServicio,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextDark
-                    )
-                    Text(
-                        text = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(solicitud.fechaCreacion.toDate()),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextLight
-                    )
-                }
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = stringResource(R.string.balance_format, solicitud.monto),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (solicitud.tipoServicio == "RETIRO") TextDark else AccentGreen
-                )
-                Text(
-                    text = solicitud.estado,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = when(solicitud.estado) {
-                        "PENDIENTE" -> Color(0xFFF59E0B) // Amber 500
-                        "COMPLETADO" -> AccentGreen
-                        else -> TextLight
-                    }
+        Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                shape = CircleShape, 
+                color = if (solicitud.tipoServicio == "RECOLECCION") ErrorRed.copy(0.1f) else SuccessGreen.copy(0.1f), 
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = if (solicitud.tipoServicio == "RECOLECCION") Icons.AutoMirrored.Filled.CallReceived else Icons.AutoMirrored.Filled.CallMade,
+                    modifier = Modifier.padding(12.dp),
+                    tint = if (solicitud.tipoServicio == "RECOLECCION") ErrorRed else SuccessGreen,
+                    contentDescription = null
                 )
             }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if(solicitud.tipoServicio == "RECOLECCION") "Entregar Efectivo" else "Pedir Efectivo", 
+                    fontWeight = FontWeight.Bold, 
+                    color = TextPrimary
+                )
+                Text(text = solicitud.estado, style = MaterialTheme.typography.labelSmall, color = if(solicitud.estado == "FINALIZADA") SuccessGreen else TextTertiary)
+            }
+            Text(text = formatter.format(solicitud.monto), fontWeight = FontWeight.Bold, color = TextPrimary)
         }
     }
 }
 
 @Composable
 fun EmptyActivityState() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            Icons.Default.Inbox,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = TextLight.copy(alpha = 0.3f)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "No hay actividad reciente",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextLight
-        )
+    Column(modifier = Modifier.fillMaxWidth().padding(40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(Icons.Default.Inbox, contentDescription = null, modifier = Modifier.size(64.dp), tint = TextTertiary.copy(alpha = 0.3f))
+        Text(text = "Sin movimientos hoy", color = TextSecondary)
     }
 }

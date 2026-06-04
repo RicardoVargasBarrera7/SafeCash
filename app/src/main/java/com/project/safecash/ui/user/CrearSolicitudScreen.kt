@@ -1,19 +1,27 @@
 package com.project.safecash.ui.user
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.location.Geocoder
+import android.location.Location
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.automirrored.filled.CallMade
+import androidx.compose.material.icons.automirrored.filled.CallReceived
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,217 +32,281 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
 import com.project.safecash.data.model.Solicitud
 import com.project.safecash.data.repository.AuthRepository
 import com.project.safecash.ui.solicitud.SolicitudViewModel
 import com.project.safecash.ui.theme.*
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.*
 
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CrearSolicitudScreen(navController: NavController, viewModel: SolicitudViewModel = viewModel()) {
-    var monto by remember { mutableStateOf("") }
-    var tipo by remember { mutableStateOf("RETIRO") }
-    var direccion by remember { mutableStateOf("") }
-    var observaciones by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-
+fun CrearSolicitudScreen(
+    navController: NavController, 
+    viewModel: SolicitudViewModel = viewModel(),
+    userViewModel: UserViewModel = viewModel()
+) {
+    val userData by userViewModel.userData.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val solicitudState by viewModel.solicitudState.collectAsState()
     val authRepository = remember { AuthRepository() }
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    
+    var rawMonto by remember { mutableStateOf("") }
+    var tipo by remember { mutableStateOf("ENTREGA") }
+    var direccion by remember(userData) { mutableStateOf(userData?.direccionPrincipal ?: "") }
+    var showSuccessDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(solicitudState) {
-        when (val state = solicitudState) {
-            is SolicitudViewModel.SolicitudState.Success -> {
-                Toast.makeText(context, "Solicitud creada con éxito", Toast.LENGTH_SHORT).show()
-                navController.popBackStack()
+    // Estado del Mapa
+    val bogota = LatLng(4.6097, -74.0817)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(bogota, 14f)
+    }
+    var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
+
+    // Launcher de Permisos de Ubicación
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                      permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { loc: Location? ->
+                loc?.let {
+                    val userLatLng = LatLng(it.latitude, it.longitude)
+                    selectedLocation = userLatLng
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(userLatLng, 16f)
+                    
+                    // Geocoding reverso para obtener dirección automáticamente
+                    obtenerDireccion(context, userLatLng) { addr ->
+                        direccion = addr
+                    }
+                }
             }
-            is SolicitudViewModel.SolicitudState.Error -> {
-                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
-            }
-            else -> Unit
+        } else {
+            Toast.makeText(context, "Permisos de ubicación necesarios para verificar tu posición", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { },
+            icon = { Icon(Icons.Default.CheckCircle, null, tint = SuccessGreen, modifier = Modifier.size(64.dp)) },
+            title = { Text("Solicitud Exitosa", fontWeight = FontWeight.Bold) },
+            text = { Text("Tu pedido de ${if(tipo=="ENTREGA") "efectivo" else "recaudo"} ha sido enviado. Un agente llegará pronto.") },
+            confirmButton = {
+                Button(
+                    onClick = { navController.popBackStack() },
+                    shape = RoundedCornerShape(12.dp)
+                ) { Text("Entendido") }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = Color.White
+        )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nueva Solicitud", fontWeight = FontWeight.Bold) },
+                title = { Text("Configurar Pedido", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundGray)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundLight)
             )
-        },
-        containerColor = BackgroundGray
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Detalles del Servicio",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = TextDark,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Text(
-                text = "Completa la información para que un agente pueda asistirte",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextLight,
-                modifier = Modifier.align(Alignment.Start).padding(bottom = 24.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Selector de Tipo
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = !expanded },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = tipo,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Tipo de Servicio") },
-                            leadingIcon = { Icon(Icons.Default.SwapHoriz, contentDescription = null) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                            modifier = Modifier.background(Color.White)
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("RETIRO (Recibir efectivo)") },
-                                onClick = { tipo = "RETIRO"; expanded = false }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("DEPÓSITO (Entregar efectivo)") },
-                                onClick = { tipo = "DEPÓSITO"; expanded = false }
-                            )
+            // Mapa interactivo
+            Box(modifier = Modifier.fillMaxWidth().height(320.dp)) {
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    uiSettings = MapUiSettings(zoomControlsEnabled = false),
+                    onMapClick = { latLng ->
+                        selectedLocation = latLng
+                        obtenerDireccion(context, latLng) { addr ->
+                            direccion = addr
                         }
                     }
-
-                    // Campo Monto
-                    OutlinedTextField(
-                        value = monto,
-                        onValueChange = { monto = it },
-                        label = { Text("Monto a transaccionar") },
-                        placeholder = { Text("0.00") },
-                        leadingIcon = { Icon(Icons.Default.Payments, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true
-                    )
-
-                    // Campo Dirección
-                    OutlinedTextField(
-                        value = direccion,
-                        onValueChange = { direccion = it },
-                        label = { Text("Dirección de encuentro") },
-                        placeholder = { Text("Ej: Calle Falsa 123, Edificio X") },
-                        leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = false,
-                        maxLines = 3
-                    )
-
-                    // Campo Observaciones
-                    OutlinedTextField(
-                        value = observaciones,
-                        onValueChange = { observaciones = it },
-                        label = { Text("Indicaciones adicionales") },
-                        placeholder = { Text("Ej: Portón negro, llamar al llegar...") },
-                        leadingIcon = { Icon(Icons.Default.Description, contentDescription = null) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        minLines = 3
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Info Alert
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = AccentBlue.copy(alpha = 0.05f)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Info, contentDescription = null, tint = AccentBlue)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Un agente operativo se asignará a tu ubicación tras confirmar la solicitud.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SecondaryBlue
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Button(
-                onClick = {
-                    val montoVal = monto.toDoubleOrNull() ?: 0.0
-                    val uid = authRepository.getCurrentUserId()
-                    if (uid != null && montoVal > 0 && direccion.isNotEmpty()) {
-                        val solicitud = Solicitud(
-                            usuarioId = uid,
-                            tipoServicio = tipo,
-                            monto = montoVal,
-                            direccion = direccion,
-                            observaciones = observaciones
-                        )
-                        viewModel.crearSolicitud(solicitud)
-                    } else {
-                        Toast.makeText(context, "Por favor completa los campos obligatorios", Toast.LENGTH_SHORT).show()
+                    selectedLocation?.let {
+                        Marker(state = MarkerState(position = it), title = "Punto de encuentro")
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                enabled = solicitudState !is SolicitudViewModel.SolicitudState.Loading,
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
-                if (solicitudState is SolicitudViewModel.SolicitudState.Loading) {
-                    CircularProgressIndicator(
+                }
+
+                // Botón Flotante para Ubicación Real (GPS)
+                FloatingActionButton(
+                    onClick = { 
+                        permissionLauncher.launch(arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ))
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp),
+                    containerColor = Color.White,
+                    contentColor = AccentBlue,
+                    shape = CircleShape
+                ) {
+                    Icon(Icons.Default.MyLocation, "Mi ubicación")
+                }
+                
+                Surface(
+                    modifier = Modifier.align(Alignment.TopCenter).padding(16.dp),
+                    color = PrimaryBlue.copy(alpha = 0.8f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        "Toca el mapa para fijar tu ubicación exacta",
                         color = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall
                     )
-                } else {
-                    Text("Confirmar Solicitud", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 }
             }
-            
-            Spacer(modifier = Modifier.height(40.dp))
+
+            Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                
+                // Selector de Tipo de Servicio
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TipoServicioCard(
+                        title = "Pedir Efectivo",
+                        icon = Icons.AutoMirrored.Filled.CallMade,
+                        isSelected = tipo == "ENTREGA",
+                        modifier = Modifier.weight(1f),
+                        onClick = { tipo = "ENTREGA" }
+                    )
+                    TipoServicioCard(
+                        title = "Entregar",
+                        icon = Icons.AutoMirrored.Filled.CallReceived,
+                        isSelected = tipo == "RECOLECCION",
+                        modifier = Modifier.weight(1f),
+                        onClick = { tipo = "RECOLECCION" }
+                    )
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    border = BorderStroke(1.dp, BorderLight)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        OutlinedTextField(
+                            value = direccion,
+                            onValueChange = { direccion = it },
+                            label = { Text("Punto de Encuentro") },
+                            leadingIcon = { Icon(Icons.Default.LocationOn, null, tint = AccentBlue) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        
+                        val formatter = remember { DecimalFormat("#,###", DecimalFormatSymbols(Locale.getDefault()).apply { groupingSeparator = '.' }) }
+                        val visualMonto = remember(rawMonto) { 
+                            if(rawMonto.isEmpty()) "" 
+                            else try { formatter.format(rawMonto.toLong()) } catch(e:Exception) { rawMonto }
+                        }
+                        
+                        OutlinedTextField(
+                            value = visualMonto,
+                            onValueChange = { input ->
+                                val clean = input.replace(".", "").filter { it.isDigit() }
+                                if (clean.length <= 10) rawMonto = clean
+                            },
+                            label = { Text("Monto COP") },
+                            prefix = { Text("$ ") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        val montoVal = rawMonto.toDoubleOrNull() ?: 0.0
+                        val uid = authRepository.getCurrentUserId()
+                        if (uid != null && montoVal > 0 && direccion.isNotBlank()) {
+                            if (tipo == "RECOLECCION" && (userData?.saldo ?: 0.0) < montoVal) {
+                                Toast.makeText(context, "Saldo insuficiente para entregar", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            viewModel.crearSolicitud(Solicitud(
+                                usuarioId = uid,
+                                usuarioNombre = userData?.nombre,
+                                tipoServicio = if(tipo == "ENTREGA") "BASE" else "RECOLECCION",
+                                monto = montoVal,
+                                direccion = direccion,
+                                latitudDestino = selectedLocation?.latitude ?: bogota.latitude,
+                                longitudDestino = selectedLocation?.longitude ?: bogota.longitude
+                            ))
+                            showSuccessDialog = true
+                        } else {
+                            Toast.makeText(context, "Faltan datos requeridos (Ubicación y Monto)", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(60.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
+                ) {
+                    Text("Confirmar Pedido", fontWeight = FontWeight.Black, fontSize = 17.sp)
+                }
+            }
+        }
+    }
+}
+
+private fun obtenerDireccion(context: android.content.Context, latLng: LatLng, onResult: (String) -> Unit) {
+    try {
+        val geocoder = Geocoder(context, Locale.getDefault())
+        if (Build.VERSION.SDK_INT >= 33) {
+            geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1) { addresses ->
+                if (addresses.isNotEmpty()) {
+                    onResult(addresses[0].getAddressLine(0))
+                }
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
+            if (addresses?.isNotEmpty() == true) {
+                onResult(addresses[0].getAddressLine(0))
+            }
+        }
+    } catch (e: Exception) {
+        onResult("Lat: ${latLng.latitude}, Lon: ${latLng.longitude}")
+    }
+}
+
+@Composable
+fun TipoServicioCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, isSelected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.height(110.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) PrimaryBlue else Color.White),
+        border = if (isSelected) null else BorderStroke(1.dp, BorderLight)
+    ) {
+        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, null, tint = if (isSelected) Color.White else AccentBlue, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.height(8.dp))
+            Text(title, fontWeight = FontWeight.Bold, color = if (isSelected) Color.White else TextPrimary, fontSize = 14.sp)
         }
     }
 }
